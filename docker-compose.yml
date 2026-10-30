@@ -1,0 +1,8 @@
+services:
+  agent-guard:
+    build: .
+    ports:
+      - "8080:8080"
+    # Audit log persists on your machine, not just in the container.
+    volumes:
+      - ./audit.jsonl:/app/audit.jsonl

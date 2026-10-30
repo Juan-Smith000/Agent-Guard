@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-guard"
+version = "0.2.0"
+description = "AI agent security gateway for LLM tool use: per-agent allowlists, rate limits, argument validation, indirect prompt injection scanning, secret redaction, and audited approvals. Python stdlib only."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "John" }]
+keywords = [
+    "ai-agents", "llm", "llm-security", "ai-agent-security",
+    "guardrails", "prompt-injection", "indirect-prompt-injection",
+    "tool-use", "function-calling", "agent-tools",
+    "allowlist", "rate-limiting", "audit-log",
+    "ollama", "agentic-ai", "security",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries",
+    "Intended Audience :: Developers",
+]
+dependencies = []
+
+[project.urls]
+# Replace <username> with your GitHub username when you create the repo.
+# GitHub and PyPI both use this URL, so it matters for discoverability.
+Homepage = "https://github.com/<username>/agent-guard"
+Repository = "https://github.com/<username>/agent-guard"
+Issues = "https://github.com/<username>/agent-guard/issues"
+
+[tool.setuptools]
+packages = ["agent_guard"]

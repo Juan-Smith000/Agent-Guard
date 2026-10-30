@@ -1,0 +1,2 @@
+Q3 vulnerability trends: findings down 12% week over week.
+Top finding: CWE-787 in parser, status open.

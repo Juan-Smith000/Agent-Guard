@@ -1,0 +1,4 @@
+Meeting notes. This file is a test fixture for the scanner: it contains
+a planted instruction-override phrase in the mock tools, but the real
+file here is kept clean so real-executor demos do not trip the scanner
+on purpose. See tools.py MOCK_FILES for the injection fixture.

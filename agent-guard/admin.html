@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Guard — Admin</title>
+<style>
+/*
+  Claude-style redesign, 2026-10-29.
+  Warm paper background, serif headings, quiet terracotta accent,
+  generous whitespace — the opposite of a dark, busy ops dashboard.
+  The JS contracts are unchanged: esc() for every policy value,
+  Edit/Delete/Approve lookups by index only, never by building
+  code from a policy value. Restyling must never reintroduce
+  innerHTML interpolation of unescaped values.
+*/
+:root{
+  --paper:#f0eee6; --paper-2:#faf9f6; --card:#ffffff;
+  --ink:#1f1e1d; --ink-soft:#3d3a37; --muted:#6b6560; --faint:#8a857f;
+  --line:#e5e0d5; --line-strong:#ddd6c9;
+  --accent:#d97757; --accent-dark:#c25e3d; --accent-soft:#fdf0eb;
+  --green:#2e7d4f; --green-bg:#e6f2e8;
+  --red:#b42318; --red-bg:#f7e2de;
+  --amber:#8a5a00; --amber-bg:#f7ead3;
+}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;margin:0;background:var(--paper);color:var(--ink);line-height:1.5}
+h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:500;letter-spacing:-.01em}
+header{background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.topbar{max-width:1080px;margin:0 auto;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:.75rem}
+.mark{width:38px;height:38px;border-radius:11px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:1.25rem}
+.brand h1{margin:0;font-size:1.35rem}
+.brand p{margin:0;color:var(--muted);font-size:.85rem}
+.pill{display:inline-block;padding:.25rem .7rem;border:1px solid var(--line-strong);border-radius:999px;background:var(--paper-2);color:var(--muted);font-size:.8rem}
+main{max-width:1080px;margin:0 auto;padding:1.75rem 1.5rem 3rem}
+.hero{margin:0 0 1.5rem}
+.hero h2{margin:0;font-size:1.9rem}
+.hero p{margin:.4rem 0 0;color:var(--muted);max-width:640px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:1.5rem;margin-bottom:1.25rem;box-shadow:0 1px 2px rgba(31,30,29,.04)}
+.card h2{margin:0 0 .35rem;font-size:1.25rem}
+.card .sub{margin:0 0 1rem;color:var(--muted);font-size:.92rem}
+.note{color:var(--muted);font-size:.88rem}
+.row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+input,select{padding:.6rem .8rem;border:1px solid var(--line-strong);border-radius:12px;font:inherit;background:#fff;color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--accent);border-color:var(--accent);outline-offset:1px}
+input::placeholder{color:var(--faint)}
+button{padding:.6rem 1.1rem;border:0;border-radius:999px;cursor:pointer;font:inherit;font-weight:550;background:var(--accent);color:#fff;transition:filter .15s,transform .1s}
+button:hover{filter:brightness(.95)}
+button:active{transform:translateY(1px)}
+button.secondary{background:#fff;color:var(--ink);border:1px solid var(--line-strong)}
+button.danger{background:#fff;color:var(--red);border:1px solid #e8c4bf}
+button.danger:hover{background:var(--red-bg)}
+button.success{background:var(--green);color:#fff}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem;margin-top:1.25rem}
+.stat{border:1px solid var(--line);border-radius:16px;padding:1rem;background:var(--paper-2)}
+.stat b{display:block;font-family:Georgia,serif;font-size:1.9rem;font-weight:500;line-height:1.1}
+.stat span{color:var(--muted);font-size:.85rem}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{border-bottom:1px solid var(--line);padding:.7rem .5rem;text-align:left;vertical-align:top}
+tbody tr:hover{background:var(--paper-2)}
+th{color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+code{font-family:ui-monospace,Menlo,monospace;font-size:.85em;background:var(--paper-2);border:1px solid var(--line);padding:.15rem .4rem;border-radius:6px;word-break:break-all}
+.badge{display:inline-block;padding:.2rem .6rem;border-radius:999px;font-size:.8rem;font-weight:600}
+.badge.allow{background:var(--green-bg);color:var(--green)}
+.badge.block{background:var(--red-bg);color:var(--red)}
+.badge.approval{background:var(--amber-bg);color:var(--amber)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.9rem}
+.form-grid label{display:flex;flex-direction:column;gap:.3rem;font-size:.88rem;color:var(--muted)}
+.form-grid label input{color:var(--ink)}
+.pills{display:flex;gap:.5rem;flex-wrap:wrap}
+.pills label{display:flex;gap:.4rem;align-items:center;background:var(--paper-2);border:1px solid var(--line);border-radius:999px;padding:.45rem .85rem;color:var(--ink);cursor:pointer}
+.pills label:has(input:checked){background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+#msg{min-height:1.2em;font-weight:600;color:var(--ink-soft)}
+.empty{color:var(--muted);padding:1rem 0}
+footer{max-width:1080px;margin:0 auto;padding:0 1.5rem 2rem;color:var(--faint);font-size:.85rem}
+@media(max-width:640px){.hero h2{font-size:1.5rem}table{font-size:.85rem}.card{padding:1.1rem}}
+</style>
+</head>
+<body>
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark">✦</div>
+      <div>
+        <h1>Agent Guard</h1>
+        <p>A gate between your agents and their tools</p>
+      </div>
+    </div>
+    <span class="pill">Admin &middot; local only by default</span>
+  </div>
+</header>
+<main>
+  <div class="hero">
+    <h2>Policies, approvals, and audit — in one calm place.</h2>
+    <p>Who can use which tools, what needs a human first, and what was decided. Nothing here runs a tool by itself; it only guards the ones your agents ask for.</p>
+  </div>
+
+  <div class="card">
+    <h2>Overview</h2>
+    <p class="sub">Refresh to see the latest decisions. If ADMIN_KEY is set, enter it once here — it is sent as the X-Admin-Key header.</p>
+    <div class="row">
+      <label>Admin key <input id="adminKey" type="password" placeholder="Only if ADMIN_KEY is set"></label>
+      <button onclick="loadAll()">Refresh</button>
+    </div>
+    <div class="stats" id="stats"></div>
+    <p id="msg"></p>
+  </div>
+
+  <div class="card">
+    <h2>Pending approvals</h2>
+    <p class="sub">High-risk actions that returned NEEDS_APPROVAL. Approve actually runs the action now (and audits it); Reject drops it. Approvals expire after 15 minutes.</p>
+    <div id="approvals"></div>
+  </div>
+
+  <div class="card">
+    <h2>Policies</h2>
+    <p class="sub">Least privilege, per agent. Edit a row to change it — changes take effect immediately, no restart.</p>
+    <table>
+      <thead><tr><th>Agent</th><th>Tenant</th><th>Key</th><th>Tools</th><th>Rate / min</th><th>Approval</th><th>Tables</th><th>Hosts</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Add or edit a policy</h2>
+    <p class="sub">Allow is a ticked tool. Block is an unticked tool, or an unknown agent or tool. Tables: a read-only query must only touch the tables listed here (the form defaults to findings; empty in code means no restriction).</p>
+    <form id="form" onsubmit="return savePolicy(event)">
+      <div class="form-grid">
+        <label>Agent ID <input id="agent_id" required></label>
+        <label>Key <input id="key" required></label>
+        <label>Tenant <input id="tenant" value="default"></label>
+        <label>Rate / min <input id="rate" type="number" value="30" min="1" max="1000"></label>
+        <label>Allowed hosts, comma separated <input id="hosts" value="api.internal.example"></label>
+        <label>Allowed tables, comma separated <input id="tables" value="findings"></label>
+        <label>Sandbox root <input id="sandbox" value="data/"></label>
+        <label>Key expires in, minutes (blank = no expiry) <input id="expiry" type="number" min="1" placeholder="e.g. 60"></label>
+      </div>
+      <p style="margin:1.25rem 0 .5rem;font-weight:600">Tools</p>
+      <div class="pills">
+        <label><input type="checkbox" class="tool" value="read_file" checked> read_file</label>
+        <label><input type="checkbox" class="tool" value="query_db" checked> query_db</label>
+        <label><input type="checkbox" class="tool" value="call_api" checked> call_api</label>
+        <label><input type="checkbox" class="tool" value="run_command"> run_command</label>
+      </div>
+      <p><label><input id="approval" type="checkbox" checked> High-risk actions need approval</label></p>
+      <div class="row">
+        <button type="submit">Save policy</button>
+        <button type="button" class="secondary" onclick="clearForm()">Clear form</button>
+      </div>
+    </form>
+  </div>
+</main>
+<footer>Agent Guard &middot; stdlib Python only &middot; demo keys in this repo are not secrets — rotate them before any real deployment.</footer>
+
+<script>
+// Escaping is a security feature here, not decoration: the old UI
+// interpolated policy fields straight into innerHTML, so a policy
+// containing markup was stored XSS in the admin's browser. Escape
+// everything, and never build an onclick from a policy value — look
+// policies and approvals up by index instead.
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function maskKey(k){ k=String(k); return k.length>8 ? esc(k.slice(0,4)+'…'+k.slice(-3)) : esc(k); }
+let _policies=[], _approvals=[];
+function headers(){ const k=document.getElementById('adminKey').value; return k?{'X-Admin-Key':k,'Content-Type':'application/json'}:{'Content-Type':'application/json'}; }
+async function loadAll(){
+  const p=await fetch('/admin/policies',{headers:headers()});
+  if(!p.ok){ document.getElementById('msg').textContent='Could not load policies (admin key?)'; return; }
+  const data=await p.json();
+  _policies=data;
+  document.getElementById('rows').innerHTML=data.map((x,i)=>`<tr><td><b>${esc(x.agent_id)}</b></td><td>${esc(x.tenant_id||'default')}</td><td><code>${maskKey(x.key)}</code></td><td>${esc(x.allowed_tools.join(', ')||'(none)')}</td><td>${esc(x.rate_limit_per_minute)}</td><td>${x.requires_approval_for_high_risk?'<span class="badge approval">yes</span>':'no'}</td><td>${esc((x.allowed_tables||[]).join(', ')||'(any)')}</td><td>${esc(x.allowed_hosts.join(', '))}</td><td><button class="secondary" onclick='editPolicy(${i})'>Edit</button> <button class="danger" onclick="delPolicy(${i})">Delete</button></td></tr>`).join('');
+  const s=await fetch('/admin/stats',{headers:headers()});
+  if(s.ok){ const st=await s.json(); const d=st.by_decision||{};
+    document.getElementById('stats').innerHTML=
+      `<div class="stat"><b>${esc(st.total||0)}</b><span>total decisions</span></div>`+
+      `<div class="stat"><b>${esc(d.ALLOW||0)}</b><span><span class="badge allow">ALLOW</span></span></div>`+
+      `<div class="stat"><b>${esc(d.BLOCK||0)}</b><span><span class="badge block">BLOCK</span></span></div>`+
+      `<div class="stat"><b>${esc(d.NEEDS_APPROVAL||0)}</b><span><span class="badge approval">NEEDS_APPROVAL</span></span></div>`;
+  }
+  await loadApprovals();
+}
+async function loadApprovals(){
+  const r=await fetch('/admin/approvals',{headers:headers()});
+  if(!r.ok){ document.getElementById('approvals').innerHTML='<p class="empty">Approvals unavailable (admin key?)</p>'; return; }
+  const data=await r.json(); _approvals=data;
+  if(!data.length){ document.getElementById('approvals').innerHTML='<p class="empty">No pending approvals. Nice and quiet.</p>'; return; }
+  document.getElementById('approvals').innerHTML='<table><thead><tr><th>Agent</th><th>Tool</th><th>Request</th><th>Expires</th><th></th></tr></thead><tbody>'+
+    data.map((a,i)=>`<tr><td>${esc(a.agent)}</td><td><code>${esc(a.tool)}</code></td><td><code>${esc(JSON.stringify(a.args))}</code></td><td>${esc(new Date(a.expires_at*1000).toLocaleTimeString())}</td><td><button class="success" onclick="actApproval(${i},true)">Approve &amp; run</button> <button class="danger" onclick="actApproval(${i},false)">Reject</button></td></tr>`).join('')+'</tbody></table>';
+}
+async function actApproval(i,approve){
+  const id=_approvals[i].approval_id;
+  const r=await fetch(approve?'/admin/approvals/approve':'/admin/approvals/reject',{method:'POST',headers:headers(),body:JSON.stringify({approval_id:id})});
+  const j=await r.json().catch(()=>({}));
+  document.getElementById('msg').textContent=r.ok?`Approval ${approve?'approved':'rejected'}: ${j.decision} (${j.reason})`:'Approval failed: '+(await r.text());
+  loadAll();
+}
+function editPolicy(i){ const x=_policies[i]; document.getElementById('agent_id').value=x.agent_id; document.getElementById('key').value=x.key; document.getElementById('tenant').value=x.tenant_id||'default'; document.getElementById('rate').value=x.rate_limit_per_minute; document.getElementById('approval').checked=x.requires_approval_for_high_risk; document.getElementById('hosts').value=x.allowed_hosts.join(', '); document.getElementById('tables').value=(x.allowed_tables||[]).join(', '); document.getElementById('sandbox').value=x.sandbox_root; document.getElementById('expiry').value=''; document.querySelectorAll('.tool').forEach(c=>c.checked=x.allowed_tools.includes(c.value)); window.scrollTo(0,document.body.scrollHeight); }
+function clearForm(){ document.getElementById('form').reset(); document.getElementById('tenant').value='default'; document.getElementById('tables').value='findings'; }
+async function savePolicy(e){ e.preventDefault();
+  const body={agent_id:document.getElementById('agent_id').value,key:document.getElementById('key').value,tenant_id:document.getElementById('tenant').value||'default',allowed_tools:[...document.querySelectorAll('.tool:checked')].map(c=>c.value),rate_limit_per_minute:parseInt(document.getElementById('rate').value||'30'),requires_approval_for_high_risk:document.getElementById('approval').checked,allowed_hosts:document.getElementById('hosts').value.split(',').map(s=>s.trim()).filter(Boolean),allowed_tables:document.getElementById('tables').value.split(',').map(s=>s.trim()).filter(Boolean),sandbox_root:document.getElementById('sandbox').value||'data/'};
+  const exp=document.getElementById('expiry').value; if(exp) body.expires_in_minutes=parseFloat(exp);
+  const r=await fetch('/admin/policies',{method:'POST',headers:headers(),body:JSON.stringify(body)});
+  document.getElementById('msg').textContent=r.ok?'Saved.':'Save failed: '+(await r.text());
+  if(r.ok) loadAll(); return false; }
+async function delPolicy(i){ const key=_policies[i].key; if(!confirm('Delete policy for '+key+'?')) return; const r=await fetch('/admin/policies?key='+encodeURIComponent(key),{method:'DELETE',headers:headers()}); document.getElementById('msg').textContent=r.ok?'Deleted.':'Delete failed.'; loadAll(); }
+loadAll();
+</script>
+</body>
+</html>
