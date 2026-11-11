@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Agent Guard runtime artifacts — never commit these
+audit.jsonl
+audit.db
+audit*.jsonl
+data/demo.db
+policies.json
+approvals.json
+approvals.json.tmp
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
