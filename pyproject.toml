@@ -30,11 +30,11 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-# Replace <username> with your GitHub username when you create the repo.
-# GitHub and PyPI both use this URL, so it matters for discoverability.
-Homepage = "https://github.com/<username>/agent-guard"
-Repository = "https://github.com/<username>/agent-guard"
-Issues = "https://github.com/<username>/agent-guard/issues"
+# Repo URL: https://github.com/Juan-Smith000/Agent-Guard (exact casing as created).
+# Local folder and PyPI package stay lowercase agent-guard; GitHub preserves repo casing.
+Homepage = "https://github.com/Juan-Smith000/Agent-Guard"
+Repository = "https://github.com/Juan-Smith000/Agent-Guard"
+Issues = "https://github.com/Juan-Smith000/Agent-Guard/issues"
 
 [tool.setuptools]
 packages = ["agent_guard"]
