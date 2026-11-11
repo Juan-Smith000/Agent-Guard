@@ -89,7 +89,7 @@ stdlib-only project.
 ### Get the code
 
 ```sh
-git clone <your-repo-url> agent-guard
+git clone https://github.com/Juan-Smith000/Agent-Guard.git agent-guard
 cd agent-guard
 ```
 
@@ -377,6 +377,7 @@ and the admin UI, add a policies file when you want persistence.
 | `PORT` | `8080` | Listen port. |
 | `ADMIN_KEY` | *(unset)* | If set, `/admin/*` requires `X-Admin-Key` to match. If unset, admin is only open on loopback. **Set this before publishing any port.** |
 | `POLICIES_PATH` | *(unset)* | JSON file to load policies from at startup and persist web-UI changes to. Without it, policies live in memory only and reset on restart. |
+| `APPROVALS_PATH` | `approvals.json` | JSON file for pending approvals (server only). Set to `""` for in-memory only. Library `Guard()` with no path stays in-memory. |
 | `AUDIT_BACKEND` | `jsonl` | `jsonl` or `sqlite`. |
 | `AUDIT_PATH` | `audit.jsonl` (or `audit.db` for sqlite) | Where audit records go. |
 | `REAL_TOOLS` | *(unset)* | Set to `1` for the real file/ls/SQLite executor instead of mocks. See V2 below. |
@@ -588,8 +589,10 @@ Or the same thing over HTTP: `REAL_TOOLS=1 python3 -m agent_guard.server`,
 then the usual `POST /tool` calls. Real tools are deliberately
 narrow: files inside the sandbox only (100 KB cap, symlinks
 resolved), `ls`/`echo` only with no shell, and a real SQLite demo
-DB. `call_api` stays mocked — a real HTTP client needs redirect /
-DNS-rebinding handling this module does not claim.
+DB, and a real HTTPS `call_api` with SSRF protections (https only,
+allowlisted host, every resolved IP must be public, redirects
+re-validated per hop, 5s timeout, 100 KB cap). Residual risk:
+DNS is re-resolved per hop, not pinned to one IP — see real_tools.py.
 
 ### Example 4 — Custom audit sink (plug in your own database)
 
@@ -737,7 +740,7 @@ Pentested 2026-10-24, full report in `PENTEST.md`, harness in
   base64 injection scanning, wider secret redaction, sliding-window
   + per-agent rate limits, policy validation, body-size cap, and
   admin-UI HTML escaping.
-- All 30 unit tests and the fuzzer (0 violations, 0 crashes on the latest 40,000-case run)
+- All 35 unit tests and the fuzzer (0 violations, 0 crashes on the latest 40,000-case run)
   still pass after the fixes.
 
 ## Logs — where they go, and plugging in your own database
@@ -848,7 +851,7 @@ agent_guard/
   guard.py     Decision engine: auth, rate limit, allowlist, validation, approval
   scanner.py   Output scanning: injection phrases, secrets, personal data
   tools.py     Sandboxed mock tools (no real shell, network, or database)
-  real_tools.py  Real executor (opt-in): files, ls/echo, SQLite
+  real_tools.py  Real executor (opt-in): files, ls/echo, SQLite, HTTPS call_api (SSRF-checked)
   templates.py Policy templates + protected, non-negotiable rules
   policy.py    Agent policies, JSON load/save for the management app
   audit.py     Pluggable audit sinks: JSONL, SQLite, or your own sink
@@ -856,9 +859,9 @@ agent_guard/
   manage.py    CLI management tool for policies
   admin.html   Browser management UI, served at /admin
   server.py    Stdlib HTTP server: POST /tool, GET /health, /admin/*
-tests/         Unit tests + eval suite runner + fuzz + audit + manage tests (30 tests)
+tests/         Unit tests + eval suite runner + fuzz + audit + manage tests (42 tests)
 eval/          scenarios.json — benign and attack cases
-eval/scanner_eval.py  Scanner FP/FN measurement (20 benign, 12 injection)
+eval/scanner_eval.py  Scanner FP/FN measurement (core 20 benign, 12 injection; hard 12 benign, 17 injection)
 simulation.py  Live day-in-the-life simulation, incl. V2 scenes
 data/          Real sandbox files + SQLite demo DB (created on first real use)
 USE_CASES.md   Use cases with happy path and abuse path each
@@ -873,6 +876,7 @@ pyproject.toml Minimal packaging, stdlib only, Python >= 3.10
 .gitignore     Audit logs, demo DB, policies.json, pycache — never committed
 pentest/       Pentest harness (73 cases) + before/after results
 run.sh         Local run script
+.github/workflows/ci.yml  CI: tests + scanner eval + fuzz + pentest + simulation
 Dockerfile     Container deploy
 docker-compose.yml  Container deploy with persistent audit log
 ```
@@ -897,8 +901,10 @@ Real tools are deliberately narrow: real files inside the sandbox
 only (100 KB cap, symlinks resolved), `ls`/`echo` only with no
 shell, and a real SQLite demo database (`data/demo.db`, tables
 `findings` and `users`, reseeded on first use). `call_api` is
-still mocked on purpose — a real HTTP client needs redirect /
-DNS-rebinding handling this module does not claim to provide.
+now a real HTTPS fetch, SSRF-checked (https only, allowlisted
+host, public-IP check, redirects re-validated). Residual risk,
+stated in real_tools.py: DNS is re-resolved per hop, not pinned
+to one IP.
 
 **2. Approvals that actually run.** NEEDS_APPROVAL is no longer a
 dead end. The guard stores the pending request (15-minute expiry),
@@ -1059,7 +1065,7 @@ management — would be a separate project on top of this core.
 Yes, narrowly, in V2 — and that narrowness is deliberate. Set
 `REAL_TOOLS=1` and you get real sandbox files, `ls`/`echo` with
 no shell, and a real SQLite demo DB, all behind the same guard
-decisions. `call_api` stays mocked, and the real executor is
+decisions. `call_api` is now a real HTTPS fetch (SSRF-checked), and the real executor is
 not a general sandbox: do not point it at a production shell
 or a production database. For real production execution you
 still want a container sandbox (no network, read-only
@@ -1079,21 +1085,27 @@ not a claim this repo makes today.
 
 ## Limitations (stated honestly)
 
-- **Single-process, single-threaded HTTP server, no TLS, no SSO.**
-  One slow request blocks the others. For anything beyond local
-  use, put it behind a reverse proxy with TLS and real auth.
+- **Single-process HTTP server (now threaded), no TLS, no SSO.**
+  The server is now `ThreadingHTTPServer` with a locked Guard,
+  so one slow request no longer blocks the others. For anything
+  beyond local use, still put it behind a reverse proxy with
+  TLS and real auth.
 - **Deterministic injection rules:** explainable and cheap, but
-  they miss paraphrased injections. The eval suite exists to
-  show that miss rate, and the scanner eval now measures false
-  positives too (0 FP / 0 FN on its 32-case corpus — a small
-  corpus, not proof against all paraphrases).
+  they miss paraphrased injections. The eval suite now shows
+  that miss rate honestly: core corpus 0 FP / 0 FN on 32 cases,
+  hard corpus 2 FP / 12 FN on 29 cases (16.7% FP, 70.6% FN).
+  The core number is not proof against paraphrases — the hard
+  number is the reason a classifier is on the roadmap.
 - **Real tools are narrow, not a general sandbox:** files in
-  one sandbox, `ls`/`echo` only, SQLite demo DB, `call_api`
-  still mocked. Decision logic is proven; sandbox-escape
-  resistance for arbitrary commands is not claimed.
-- **Approvals are in-memory:** pending approvals are lost on
-  restart. Persist them (in the audit DB, for example) before
-  using approvals for anything you cannot afford to lose.
+  one sandbox, `ls`/`echo` only, SQLite demo DB, and a real
+  HTTPS `call_api` (SSRF-checked, not a general HTTP client).
+  Decision logic is proven; sandbox-escape resistance for
+  arbitrary commands is not claimed.
+- **Approvals are persistent in the server, in-memory in the
+  library:** the server defaults to `approvals.json`
+  (`APPROVALS_PATH` to override, `""` for in-memory only);
+  `Guard()` with no path stays in-memory, so tests do not
+  write files. `approvals.json` is in `.gitignore`.
 - **Reason oracle (Low):** detailed BLOCK reasons let a
   key-guesser tell "wrong key" from "right key, wrong tool".
   Closed by `GENERIC_TOOL_REASONS=1` if you need it closed.
@@ -1103,6 +1115,10 @@ window rate limits (now in place, per-agent total + per-tool),
 human approval flow with expiry and audit (now in the UI and
 API), SQLite audit store (now a built-in backend), and scoped,
 expiring, tenant-aware identity (now policy fields).
+What the 2026-10-31 grade fixes added: persistent approvals,
+a threaded server with constant-time admin-key comparison,
+CI (`.github/workflows/ci.yml`), a hard scanner corpus with
+honest FP/FN, and a real SSRF-checked `call_api`.
 
 ## Roadmap
 
@@ -1140,4 +1156,3 @@ same `guard.handle(key, tool, args)` step, not a vendor plugin).
 
 If you found this by searching one of those phrases, start at
 [Installation](#installation) and [Example usage](#example-usage).
-
