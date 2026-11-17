@@ -6,9 +6,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agent_guard.guard import Guard
-from agent_guard.policy import Policy
-from agent_guard.real_tools import execute as real_execute
+from callscreen.guard import Guard
+from callscreen.policy import Policy
+from callscreen.real_tools import execute as real_execute
 
 
 class ListSink:
