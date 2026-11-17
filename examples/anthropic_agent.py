@@ -1,11 +1,11 @@
-"""Example: Anthropic (Claude) model + Agent Guard. Stdlib only.
+"""Example: Anthropic (Claude) model + CallScreen. Stdlib only.
 
 How it fits together — the same guard step as the Ollama / OpenAI
 examples, only the wire format changes:
     Claude (model, api.anthropic.com)
         -> returns a tool_use block instead of text
         -> THIS LOOP intercepts it, it does NOT go straight to a tool
-        -> Agent Guard decides ALLOW / BLOCK / NEEDS_APPROVAL
+        -> CallScreen decides ALLOW / BLOCK / NEEDS_APPROVAL
         -> if ALLOW, Guard's output (already scanned/redacted) is sent
            back as a tool_result block with the matching tool_use_id
         -> if BLOCK, the tool_result is marked is_error=True and
@@ -30,7 +30,7 @@ Notes / honest limits:
 - If ANTHROPIC_API_KEY is unset, this script exits with
   instructions instead of making an unauthenticated request.
 - Guard runs in-process here, with mock tools by default. To use
-  real tools, pass executor=real_execute (from agent_guard.real_tools)
+  real tools, pass executor=real_execute (from callscreen.real_tools)
   to Guard, or run the server with REAL_TOOLS=1 and POST to /tool.
   Do NOT execute a tool a second time after an ALLOW — Guard's
   output is already the tool's (scanned) output.
@@ -47,7 +47,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agent_guard.guard import Guard
+from callscreen.guard import Guard
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VERSION = "2023-06-01"
