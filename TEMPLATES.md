@@ -29,7 +29,7 @@ and never touch it again":
 
 Full detail per template — description, recommended_for,
 warnings, do_not_add, and use cases — is in
-`agent_guard/templates.py` and in `GET /admin/templates`,
+`callscreen/templates.py` and in `GET /admin/templates`,
 which the admin UI renders. The table above is the short
 version; the code is the source of truth.
 
@@ -43,10 +43,10 @@ submitted — you still choose before anything is created.
 **From the CLI:**
 
 ```sh
-python3 -m agent_guard.manage add --file policies.json \
+python3 -m callscreen.manage add --file policies.json \
   --template research-readonly --agent-id analyst --key key-analyst-789
 # then customise, e.g. add a tool:
-python3 -m agent_guard.manage allow --file policies.json \
+python3 -m callscreen.manage allow --file policies.json \
   --key key-analyst-789 --tool call_api
 ```
 
@@ -62,8 +62,8 @@ curl -X POST http://127.0.0.1:8080/admin/templates/apply \
 **From code:**
 
 ```python
-from agent_guard.templates import policy_from_template
-from agent_guard.guard import Guard
+from callscreen.templates import policy_from_template
+from callscreen.guard import Guard
 
 policy = policy_from_template("research-readonly", "research-agent", "key-research-123")
 # customise freely:
