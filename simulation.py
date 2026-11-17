@@ -1,4 +1,4 @@
-"""Live simulation: a day in the life of Agent Guard.
+"""Live simulation: a day in the life of CallScreen.
 
 Not a unit test and not the pentest. This is a story run through the
 real Guard code, in order, with three actors:
@@ -16,8 +16,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from agent_guard.guard import Guard
-from agent_guard.policy import Policy
+from callscreen.guard import Guard
+from callscreen.policy import Policy
 
 
 class MemSink:
@@ -82,7 +82,7 @@ def main():
          "key-research-123", "read_file", {"path": "data/report.txt"}),
     ]
 
-    print("=== AGENT GUARD SIMULATION ===\n")
+    print("=== CALLSCREEN SIMULATION ===\n")
     for actor, desc, key, tool, args in scenes:
         d = g.handle(key, tool, args)
         out = d.output[:90].replace("\n", " ") if d.output else ""
@@ -112,7 +112,7 @@ def main():
     print("Legitimate work resumes in the next minute; nothing crashed.")
     print()
     print("=== V2 SCENES: real tools, approvals that actually run, tables, expiry ===")
-    from agent_guard.real_tools import execute as real_execute
+    from callscreen.real_tools import execute as real_execute
     import time as _time
     g3 = Guard(audit_sink=MemSink(), executor=real_execute)
     d = g3.handle("key-research-123", "read_file", {"path": "data/report.txt"})
