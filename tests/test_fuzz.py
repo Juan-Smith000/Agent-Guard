@@ -5,8 +5,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agent_guard.fuzz import run_fuzz
-from agent_guard.guard import Guard
+from callscreen.fuzz import run_fuzz
+from callscreen.guard import Guard
 
 
 class TestFuzz(unittest.TestCase):
