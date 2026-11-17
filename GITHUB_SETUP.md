@@ -1,4 +1,4 @@
-# Making Agent Guard findable on GitHub and Google
+# Making CallScreen findable on GitHub and Google
 
 This file is not code — it is the copy-paste checklist for the
 moment you create the public repo. GitHub topics, the repo
@@ -9,8 +9,8 @@ searchable.
 
 ## 1. Create a PUBLIC repo (this is the step that matters most)
 
-- Name: `Agent-Guard` (exact casing as you created it — GitHub preserves
-  this in URLs; the local folder and PyPI package stay lowercase `agent-guard`)
+- Name: `CallScreen` (exact casing as you created it — GitHub preserves
+  this in URLs; the local folder and PyPI package stay lowercase `callscreen`)
 - Visibility: **Public**. A private repo is invisible to Google
   and to GitHub search, no matter how good the README is.
 - Do **not** check "Add a README" in GitHub's creator — this
@@ -21,13 +21,13 @@ searchable.
 git init
 git add .
 git status   # check: no audit.jsonl, audit.db, data/demo.db, policies.json
-git commit -m "Agent Guard 0.2.0: real tools, approvals, table allowlist"
+git commit -m "CallScreen 0.2.0: real tools, approvals, table allowlist"
 git branch -M main
-git remote add origin https://github.com/Juan-Smith000/Agent-Guard.git
+git remote add origin https://github.com/Juan-Smith000/CallScreen.git
 git push -u origin main
 ```
 
-URLs in this file and in `pyproject.toml` now use your real repo: Juan-Smith000/Agent-Guard.
+URLs in this file and in `pyproject.toml` now use your real repo: Juan-Smith000/CallScreen.
 
 ## 2. Paste this description (repo page → About → gear icon)
 
@@ -71,7 +71,7 @@ being found for those names.
 
 ## 4. Set the website field (same About panel)
 
-`https://github.com/Juan-Smith000/Agent-Guard` — or, if you later
+`https://github.com/Juan-Smith000/CallScreen` — or, if you later
 publish docs, the docs URL. A website field helps Google
 associate the repo with a canonical page.
 
@@ -87,10 +87,10 @@ python3 -m build
 python3 -m twine upload dist/*
 ```
 
-After that, `pip install agent-guard` and a PyPI search for
+After that, `pip install callscreen` and a PyPI search for
 "agent guard" / "llm guardrails" will both find it. Update
 `pyproject.toml`'s Homepage / Repository / Issues URLs to
-your real repo first — that step is now done (Juan-Smith000/Agent-Guard).
+your real repo first — that step is now done (Juan-Smith000/CallScreen).
 
 ## 6. What to expect, honestly
 
@@ -111,10 +111,10 @@ your real repo first — that step is now done (Juan-Smith000/Agent-Guard).
 
 ## 7. After you push, check it worked
 
-- GitHub: search `agent-guard` and filter by your username,
+- GitHub: search `callscreen` and filter by your username,
   then search `indirect prompt injection python` and check
   the repo appears in code/README results.
-- Google: search `site:github.com/Juan-Smith000/Agent-Guard`
+- Google: search `site:github.com/Juan-Smith000/CallScreen`
   after a few days — that query shows whether Google has
   indexed the repo at all, regardless of ranking.
 - If Google has not indexed it after a week, the usual cause
