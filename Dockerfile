@@ -1,7 +1,7 @@
 # Local / container deploy. No dependencies to install.
 FROM python:3.12-slim
 WORKDIR /app
-COPY agent_guard/ ./agent_guard/
+COPY callscreen/ ./callscreen/
 COPY tests/ ./tests/
 COPY eval/ ./eval/
 # Real tools need the sandbox files: without this, REAL_TOOLS=1 in
@@ -13,4 +13,4 @@ COPY data/ ./data/
 # only reachable on the port you publish.
 ENV HOST=0.0.0.0 PORT=8080
 EXPOSE 8080
-CMD ["python3", "-m", "agent_guard.server"]
+CMD ["python3", "-m", "callscreen.server"]
