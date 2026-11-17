@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agent_guard.scanner import scan_output
+from callscreen.scanner import scan_output
 
 BENIGN = [
     "Q3 vulnerability trends: findings down 12% week over week.",
