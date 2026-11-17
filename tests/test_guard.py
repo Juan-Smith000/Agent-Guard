@@ -6,8 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agent_guard.guard import Guard
-from agent_guard.scanner import scan_output
+from callscreen.guard import Guard
+from callscreen.scanner import scan_output
 
 
 def fresh_guard():
@@ -46,7 +46,7 @@ class TestGuard(unittest.TestCase):
     def test_rate_limit_blocks_burst(self):
         g = fresh_guard()
         # ops-agent limit is 10/min for run_command; research-agent is 30, so use a tiny policy override
-        from agent_guard.policy import Policy
+        from callscreen.policy import Policy
         g.policies["key-tiny"] = Policy("tiny", "key-tiny", {"read_file"}, rate_limit_per_minute=2)
         self.assertEqual(g.handle("key-tiny", "read_file", {"path": "data/report.txt"}).decision, "ALLOW")
         self.assertEqual(g.handle("key-tiny", "read_file", {"path": "data/report.txt"}).decision, "ALLOW")
