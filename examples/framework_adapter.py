@@ -34,7 +34,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agent_guard.guard import Guard
+from callscreen.guard import Guard
 
 
 class GuardedTool:
