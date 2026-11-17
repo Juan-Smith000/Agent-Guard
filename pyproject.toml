@@ -3,8 +3,8 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agent-guard"
-version = "0.2.0"
+name = "callscreen"
+version = "0.3.0"
 description = "AI agent security gateway for LLM tool use: per-agent allowlists, rate limits, argument validation, indirect prompt injection scanning, secret redaction, and audited approvals. Python stdlib only."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -30,11 +30,11 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-# Repo URL: https://github.com/Juan-Smith000/Agent-Guard (exact casing as created).
-# Local folder and PyPI package stay lowercase agent-guard; GitHub preserves repo casing.
-Homepage = "https://github.com/Juan-Smith000/Agent-Guard"
-Repository = "https://github.com/Juan-Smith000/Agent-Guard"
-Issues = "https://github.com/Juan-Smith000/Agent-Guard/issues"
+# Repo URL: https://github.com/Juan-Smith000/CallScreen (exact casing as created).
+# Local folder and PyPI package stay lowercase callscreen; GitHub preserves repo casing.
+Homepage = "https://github.com/Juan-Smith000/CallScreen"
+Repository = "https://github.com/Juan-Smith000/CallScreen"
+Issues = "https://github.com/Juan-Smith000/CallScreen/issues"
 
 [tool.setuptools]
-packages = ["agent_guard"]
+packages = ["callscreen"]
