@@ -5,8 +5,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agent_guard.guard import Guard
-from agent_guard.templates import PROTECTED_RULES, TEMPLATES, list_templates, policy_from_template
+from callscreen.guard import Guard
+from callscreen.templates import PROTECTED_RULES, TEMPLATES, list_templates, policy_from_template
 
 
 class TestTemplates(unittest.TestCase):
