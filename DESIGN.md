@@ -1,4 +1,4 @@
-# Agent Guard — Design Doc
+# CallScreen — Design Doc
 
 ## V2 update (2026-10-29) — read this first
 
@@ -6,7 +6,7 @@ This doc was written for V1. The following V1 non-goals are now
 partially superseded, and the rest of the doc should be read with
 this section in mind:
 
-- **Real tools exist now, opt-in.** `agent_guard/real_tools.py`
+- **Real tools exist now, opt-in.** `callscreen/real_tools.py`
   (`REAL_TOOLS=1`) reads real sandbox files, runs `ls`/`echo`
   with no shell, and queries a real SQLite demo DB. The mock
   executor is still the default. `call_api` is still mocked on
@@ -30,6 +30,22 @@ this section in mind:
   behind a reverse proxy with TLS and real auth, set `ADMIN_KEY`,
   rotate the demo keys, and turn on `GENERIC_TOOL_REASONS=1`
   if untrusted callers can reach it.
+
+## Classifier update (2026-11-16) — read this second
+
+The roadmap classifier is now built (`callscreen/classifier.py`,
+opt-in via `Guard(scanner="classifier")` or `SCANNER=classifier`).
+Multinomial Naive Bayes, pure Python, stdlib only, trained on 89
+hand-written sentences that contain zero eval sentences. Held-out
+results (`eval/classifier_eval.md`): hard FN 12 → 0, but core FP 0 → 2
+and hard FP stays 2/12, so the adoption bar (hard FN < 10%, hard
+FP < 5%, core 0/0) is NOT cleared. Verdict: shadow / opt-in only;
+regex stays the default. The two scanners have complementary failure
+modes — regex is blind to paraphrase, the classifier over-triggers
+on benign "system" / "password policy" sentences — and no OR/AND
+combination of the two clears the bar either. Next step if this is
+revisited: more benign training data in the confused contexts,
+written fresh, never copied from the eval sentences that failed.
 
 ## 1. Problem
 
@@ -60,7 +76,7 @@ can instruct the agent, a *benign-looking tool call* can exfiltrate or
 destroy, and nobody can answer afterwards: who did what, under whose
 authority, and was it blocked for a good reason?
 
-Agent Guard is the control plane in front of agent tool use.
+CallScreen is the control plane in front of agent tool use.
 
 ## 2. Goal / Non-goals
 
@@ -102,7 +118,7 @@ rows, external egress, and the audit log itself (tamper-evidence is V2).
 ## 4. Architecture
 
 ```
-Agent ──(X-Agent-Key)──> Agent Guard ──> Tool (mock, sandboxed)
+Agent ──(X-Agent-Key)──> CallScreen ──> Tool (mock, sandboxed)
                               │
                               ├─ Policy: who may use which tool, at what rate
                               ├─ Validators: args, paths, SQL, URLs, commands
@@ -176,14 +192,14 @@ positives down to 9 true ones — signal vs. noise, measured.
 
 ## 7. What V1 implements (this repo)
 
-- `agent_guard/policy.py` — policy dataclass + loading.
-- `agent_guard/guard.py` — the decision engine: auth, rate limit,
+- `callscreen/policy.py` — policy dataclass + loading.
+- `callscreen/guard.py` — the decision engine: auth, rate limit,
   allowlist, argument validation, approval routing, fail-closed defaults.
-- `agent_guard/scanner.py` — output scanning: injection phrases,
+- `callscreen/scanner.py` — output scanning: injection phrases,
   secret patterns, PII patterns, redaction.
-- `agent_guard/tools.py` — sandboxed mock tools.
-- `agent_guard/audit.py` — JSONL audit log + stats from the log.
-- `agent_guard/server.py` — stdlib HTTP server, `POST /tool` only.
+- `callscreen/tools.py` — sandboxed mock tools.
+- `callscreen/audit.py` — JSONL audit log + stats from the log.
+- `callscreen/server.py` — stdlib HTTP server, `POST /tool` only.
   No external dependencies, so it runs anywhere Python 3.12 does.
 - `tests/` — unit tests for guard, scanner, rate limiter, and the full
   eval scenario suite.
@@ -192,7 +208,7 @@ positives down to 9 true ones — signal vs. noise, measured.
 Run it:
 ```sh
 python3 -m unittest discover -s tests -v
-python3 -m agent_guard.server   # POST {"tool": "read_file", "args": {...}} to :8080/tool
+python3 -m callscreen.server   # POST {"tool": "read_file", "args": {...}} to :8080/tool
 ```
 
 ## 8. Tradeoffs, stated honestly
@@ -226,7 +242,7 @@ python3 -m agent_guard.server   # POST {"tool": "read_file", "args": {...}} to :
 ## 10. Resume bullet + interview talking points
 
 Resume bullet (once V1 is green):
-> Built Agent Guard, a policy gateway for AI agent tool use (Python):
+> Built CallScreen, a policy gateway for AI agent tool use (Python):
 > per-agent allowlists, rate limits, and argument validation plus
 > output scanning for indirect prompt injection and secrets; every
 > decision audited to JSONL with a regression eval suite proving
@@ -249,7 +265,7 @@ Checked 15 more companies beyond the original nine: Meta, Microsoft,
 Palantir, Cloudflare, CrowdStrike, Databricks, Salesforce, Tesla,
 Palo Alto Networks, SpaceX, Oracle, Adobe, ServiceNow, Uber, Coinbase.
 
-Verdict: the Agent Guard thesis holds, and gets stronger.
+Verdict: the CallScreen thesis holds, and gets stronger.
 
 - **Agents as defenders, not just threats:** Uber is hiring for
   AI-driven vulnerability scanning and *agent-based discovery* across
@@ -259,7 +275,7 @@ Verdict: the Agent Guard thesis holds, and gets stronger.
   defending *against* agents — it is hiring people to build agents
   that do security work safely.
 - **Identity is even bigger:** SpaceX (auth, MFA, identity lifecycle),
-  Meta (IAM), Databricks (RBAC/ABAC, SSO/MFA/SCIM). Agent Guard's
+  Meta (IAM), Databricks (RBAC/ABAC, SSO/MFA/SCIM). CallScreen's
   per-agent identity is the right primitive; the next step is scoped,
   expiring, tenant-aware tokens, not just a static key.
 - **Supply chain / CI-CD is a distinct top lane:** Adobe (artifact
@@ -278,7 +294,7 @@ Verdict: the Agent Guard thesis holds, and gets stronger.
   resume bullet for Palantir/Microsoft/Adobe audiences.
 - **Data / multi-tenant access:** Salesforce (multi-tenant SaaS),
   ServiceNow (instance hardening, misconfigurations), Databricks
-  (data platform security). A future Agent Guard tool should be
+  (data platform security). A future CallScreen tool should be
   tenant-scoped, not just sandbox-scoped.
 - **Native depth still pays:** Microsoft (C/C++/Rust, fuzzing,
   reverse engineering, OS internals), Tesla (Rust/C++/Go), SpaceX
