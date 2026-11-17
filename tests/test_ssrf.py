@@ -5,9 +5,9 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agent_guard.guard import Guard
-from agent_guard.policy import Policy
-from agent_guard.real_tools import _check_public_host, execute as real_execute
+from callscreen.guard import Guard
+from callscreen.policy import Policy
+from callscreen.real_tools import _check_public_host, execute as real_execute
 
 
 class ListSink:
@@ -35,13 +35,13 @@ class TestSsrfBlocking(unittest.TestCase):
                 self.assertEqual(d.decision, "BLOCK")
 
     def test_public_host_check_rejects_private_ip(self):
-        with mock.patch("agent_guard.real_tools.socket.getaddrinfo",
+        with mock.patch("callscreen.real_tools.socket.getaddrinfo",
                         return_value=[(None, None, None, None, ("10.0.0.5", 443))]):
             with self.assertRaises(ValueError):
                 _check_public_host("example.com")
 
     def test_public_host_check_accepts_public_ip(self):
-        with mock.patch("agent_guard.real_tools.socket.getaddrinfo",
+        with mock.patch("callscreen.real_tools.socket.getaddrinfo",
                         return_value=[(None, None, None, None, ("93.184.216.34", 443))]):
             _check_public_host("example.com")  # must not raise
 
@@ -65,14 +65,14 @@ class TestSsrfBlocking(unittest.TestCase):
             def open(self, req, timeout=None):
                 self.calls += 1
                 if self.calls == 1:
-                    from agent_guard.real_tools import _Redirect
+                    from callscreen.real_tools import _Redirect
                     raise _Redirect("https://127.0.0.1/status")
                 return FakeResp()
 
         fake = FakeOpener()
-        with mock.patch("agent_guard.real_tools.socket.getaddrinfo",
+        with mock.patch("callscreen.real_tools.socket.getaddrinfo",
                         return_value=[(None, None, None, None, ("93.184.216.34", 443))]):
-            with mock.patch("agent_guard.real_tools.urllib.request.build_opener",
+            with mock.patch("callscreen.real_tools.urllib.request.build_opener",
                             return_value=fake):
                 g = Guard(policies={"key-api": _policy_for("example.com")},
                           audit_sink=ListSink(), executor=real_execute)
