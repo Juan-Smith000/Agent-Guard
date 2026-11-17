@@ -1,4 +1,4 @@
-# Agent Guard — AI agent security gateway for LLM tool use
+# CallScreen — AI agent security gateway for LLM tool use
 
 > Python, stdlib-only policy gateway for LLM tool use, focused on
 > **eliminating classes of vulnerabilities, not just individual bugs**:
@@ -8,8 +8,10 @@
 
 A gate between an AI agent and its tools.
 
+*Formerly Agent Guard — renamed to CallScreen in Nov 2026.*
+
 An agent requests a file read, command execution, database query, or
-API call. Agent Guard validates that request before the tool runs,
+API call. CallScreen validates that request before the tool runs,
 and scans the tool's output before it returns to the agent. Every
 decision is audited — agent, tool, decision, reason — enabling
 data-driven review of what was allowed, what was blocked, and why.
@@ -31,7 +33,7 @@ secrets here"). A normal-looking tool call can delete data, leak a key,
 or reach an outside server. And when something goes wrong, most agent
 setups cannot establish who authorised what.
 
-Agent Guard is built to eliminate that class of problem, not to chase
+CallScreen is built to eliminate that class of problem, not to chase
 individual bad prompts. Security controls are embedded directly in the
 tool-use path, and every decision is recorded for review.
 
@@ -89,8 +91,8 @@ stdlib-only project.
 ### Get the code
 
 ```sh
-git clone https://github.com/Juan-Smith000/Agent-Guard.git agent-guard
-cd agent-guard
+git clone https://github.com/Juan-Smith000/CallScreen.git callscreen
+cd callscreen
 ```
 
 No repository URL is baked into the code, so clone from wherever
@@ -102,7 +104,7 @@ Because there are no dependencies, "installing" is just running it
 from the project folder:
 
 ```sh
-python3 -m agent_guard.server
+python3 -m callscreen.server
 # or, with the convenience script:
 ./run.sh
 ```
@@ -113,7 +115,7 @@ anyway (good hygiene, not required), the usual pattern works:
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
-python3 -m agent_guard.server
+python3 -m callscreen.server
 ```
 
 ### Option 2: Install as a package (for using it as a library)
@@ -122,8 +124,8 @@ python3 -m agent_guard.server
 pip install -e .
 ```
 
-This installs the `agent_guard` package in editable mode from
-`pyproject.toml`, so you can `from agent_guard.guard import Guard`
+This installs the `callscreen` package in editable mode from
+`pyproject.toml`, so you can `from callscreen.guard import Guard`
 from any script on that machine, and edits to the project folder
 are picked up immediately. There are still no runtime dependencies
 to resolve — the install is just registering the package.
@@ -131,15 +133,15 @@ to resolve — the install is just registering the package.
 Verify the install either way:
 
 ```sh
-python3 -c "from agent_guard.guard import Guard; print(Guard().handle('key-research-123', 'read_file', {'path': 'data/report.txt'}).decision)"
+python3 -c "from callscreen.guard import Guard; print(Guard().handle('key-research-123', 'read_file', {'path': 'data/report.txt'}).decision)"
 # ALLOW
 ```
 
 ### Option 3: Docker (no Python on your host needed)
 
 ```sh
-docker build -t agent-guard .
-docker run -p 8080:8080 agent-guard
+docker build -t callscreen .
+docker run -p 8080:8080 callscreen
 ```
 
 See [Deploy it locally](#deploy-it-locally--pick-one) for the
@@ -151,12 +153,12 @@ published port.
 - **`python3: command not found`** — Python is not on your PATH.
   On macOS, `brew install python@3.12`; on Ubuntu/Debian,
   `sudo apt install python3.12`.
-- **`ModuleNotFoundError: No module named 'agent_guard'`** —
+- **`ModuleNotFoundError: No module named 'callscreen'`** —
   you are not in the project folder, or you ran it from a
   different directory. `cd` into the folder containing
-  `agent_guard/` and `run.sh`, then retry.
+  `callscreen/` and `run.sh`, then retry.
 - **Port 8080 already in use** — start on another port:
-  `PORT=9000 python3 -m agent_guard.server`, then use
+  `PORT=9000 python3 -m callscreen.server`, then use
   `http://127.0.0.1:9000`.
 - **Docker build fails on an old Docker** — the Dockerfile uses
   `python:3.12-slim` and plain `COPY`; no BuildKit features are
@@ -169,13 +171,13 @@ No dependencies. Python 3.10+, standard library only. Nothing to install.
 ```sh
 ./run.sh
 # or, exactly the same thing:
-python3 -m agent_guard.server
+python3 -m callscreen.server
 ```
 
 You should see:
 
 ```
-agent-guard listening on 127.0.0.1:8080  (POST /tool, GET /health)
+callscreen listening on 127.0.0.1:8080  (POST /tool, GET /health)
 ```
 
 Check it is up:
@@ -225,7 +227,7 @@ Demo agents (demo keys only — see Security notes below):
 
 ## How to use
 
-Three ways to use Agent Guard, in order of how much
+Three ways to use CallScreen, in order of how much
 code you want to write. All three enforce the same decisions.
 
 ### 1. As an HTTP server (no code, for any agent stack)
@@ -233,7 +235,7 @@ code you want to write. All three enforce the same decisions.
 Start the server, then put it in front of every tool call:
 
 ```text
-your agent ──► POST /tool ──► Agent Guard ──► ALLOW? ──► run the tool
+your agent ──► POST /tool ──► CallScreen ──► ALLOW? ──► run the tool
                                                 │
                                                 └─► BLOCK / NEEDS_APPROVAL: do not run it
 ```
@@ -276,7 +278,7 @@ call", the audit log is a lie and the control is theatre.
 ### 2. As a library in your own agent code (recommended for real use)
 
 ```python
-from agent_guard.guard import Guard
+from callscreen.guard import Guard
 
 guard = Guard()
 decision = guard.handle("key-research-123", "read_file", {"path": "data/report.txt"})
@@ -309,8 +311,8 @@ curl, changes take effect immediately. See
 ### Option A: Python, no install (easiest)
 
 ```sh
-python3 -m agent_guard.server
-PORT=9000 python3 -m agent_guard.server   # different port
+python3 -m callscreen.server
+PORT=9000 python3 -m callscreen.server   # different port
 ```
 
 By default it binds to `127.0.0.1` only, so it is reachable from your
@@ -328,8 +330,8 @@ Same server, one command, with the health-check hint printed for you.
 ### Option C: Docker
 
 ```sh
-docker build -t agent-guard .
-docker run -p 8080:8080 agent-guard
+docker build -t callscreen .
+docker run -p 8080:8080 callscreen
 curl http://127.0.0.1:8080/health
 ```
 
@@ -350,7 +352,7 @@ container restart.
 ### Option E: Use it as a library in your own agent code
 
 ```python
-from agent_guard.guard import Guard
+from callscreen.guard import Guard
 
 guard = Guard()
 decision = guard.handle("key-research-123", "read_file", {"path": "data/report.txt"})
@@ -382,6 +384,7 @@ and the admin UI, add a policies file when you want persistence.
 | `AUDIT_PATH` | `audit.jsonl` (or `audit.db` for sqlite) | Where audit records go. |
 | `REAL_TOOLS` | *(unset)* | Set to `1` for the real file/ls/SQLite executor instead of mocks. See V2 below. |
 | `GENERIC_TOOL_REASONS` | *(unset)* | Set to `1` to return `reason: "blocked"` for every BLOCK, with detail only in the audit log. Use it if untrusted callers can reach the server. |
+| `SCANNER` | `regex` | `regex` or `classifier`. The classifier (Naive Bayes, stdlib only) is opt-in: it catches hard-corpus paraphrases the regex misses (hard FN 12 → 0) but adds false positives (core 2 FP, hard 2 FP), so it did not clear the adoption bar — see `eval/classifier_eval.md`. |
 
 Example — a persistent, admin-protected local server:
 
@@ -389,7 +392,7 @@ Example — a persistent, admin-protected local server:
 ADMIN_KEY='use-a-real-secret-here' \
 POLICIES_PATH=policies.json \
 AUDIT_BACKEND=sqlite AUDIT_PATH=audit.db \
-python3 -m agent_guard.server
+python3 -m callscreen.server
 ```
 
 ### Policies — what a policy is
@@ -437,8 +440,8 @@ it will contain real keys, so never commit it.
 **In code, the same policy is one constructor:**
 
 ```python
-from agent_guard.policy import Policy
-from agent_guard.guard import Guard
+from callscreen.policy import Policy
+from callscreen.guard import Guard
 
 policies = {
     "key-analyst-789": Policy(
@@ -474,7 +477,7 @@ editing a file, not by rewriting the gate.
 
 Don't start from a blank policy. Pick a template, then
 customise it — that is the intended workflow, and the full
-guide is in `TEMPLATES.md` and in `agent_guard/templates.py`.
+guide is in `TEMPLATES.md` and in `callscreen/templates.py`.
 
 | Template | Risk | Tools | Rate | Approval | Best for |
 | --- | --- | --- | --- | --- | --- |
@@ -492,13 +495,13 @@ guide is in `TEMPLATES.md` and in `agent_guard/templates.py`.
 # In the UI: /admin → "Start from a template" → pick one →
 # "Use this template in the form" → edit if you like → Save policy
 # From the CLI:
-python3 -m agent_guard.manage add --file policies.json \
+python3 -m callscreen.manage add --file policies.json \
   --template research-readonly --agent-id analyst --key key-analyst-789
 # From the API:
 curl -X POST http://127.0.0.1:8080/admin/templates/apply \
   -H "X-Admin-Key: ..." -d '{"template": "support-api", "agent_id": "support-agent", "key": "key-support-1"}'
 # From code:
-from agent_guard.templates import policy_from_template
+from callscreen.templates import policy_from_template
 policy = policy_from_template("research-readonly", "research-agent", "key-research-123")
 ```
 
@@ -527,7 +530,7 @@ a customisation guide for what is safe vs. not safe to change.
 ### Example 1 — Basic guard, in code
 
 ```python
-from agent_guard.guard import Guard
+from callscreen.guard import Guard
 
 guard = Guard()
 
@@ -552,7 +555,7 @@ print(d.decision, d.reason)   # BLOCK unknown_agent_key
 ### Example 2 — Approval flow, in code
 
 ```python
-from agent_guard.guard import Guard
+from callscreen.guard import Guard
 
 guard = Guard()
 d = guard.handle("key-research-123", "query_db",
@@ -571,8 +574,8 @@ print(approved.decision, approved.reason)  # ALLOW approval_granted
 ### Example 3 — Real tools, not mocks
 
 ```python
-from agent_guard.guard import Guard
-from agent_guard.real_tools import execute as real_execute
+from callscreen.guard import Guard
+from callscreen.real_tools import execute as real_execute
 
 guard = Guard(executor=real_execute)
 d = guard.handle("key-research-123", "read_file", {"path": "data/report.txt"})
@@ -585,7 +588,7 @@ d = guard.handle("key-research-123", "query_db", {"query": "SELECT * FROM users"
 print(d.decision, d.reason)  # BLOCK table_not_allowed
 ```
 
-Or the same thing over HTTP: `REAL_TOOLS=1 python3 -m agent_guard.server`,
+Or the same thing over HTTP: `REAL_TOOLS=1 python3 -m callscreen.server`,
 then the usual `POST /tool` calls. Real tools are deliberately
 narrow: files inside the sandbox only (100 KB cap, symlinks
 resolved), `ls`/`echo` only with no shell, and a real SQLite demo
@@ -597,7 +600,7 @@ DNS is re-resolved per hop, not pinned to one IP — see real_tools.py.
 ### Example 4 — Custom audit sink (plug in your own database)
 
 ```python
-from agent_guard.guard import Guard
+from callscreen.guard import Guard
 
 class MySink:
     def append(self, record):
@@ -692,13 +695,13 @@ Changes take effect immediately — no restart.
 **From the command line (run from the project folder):**
 
 ```sh
-python3 -m agent_guard.manage list --file policies.json
-python3 -m agent_guard.manage add --file policies.json \
+python3 -m callscreen.manage list --file policies.json
+python3 -m callscreen.manage add --file policies.json \
   --agent-id analyst --key key-analyst-789 \
   --tools read_file query_db --rate 20 --approval
-python3 -m agent_guard.manage allow --file policies.json \
+python3 -m callscreen.manage allow --file policies.json \
   --key key-analyst-789 --tool run_command
-python3 -m agent_guard.manage block --file policies.json \
+python3 -m callscreen.manage block --file policies.json \
   --key key-analyst-789 --tool run_command
 ```
 
@@ -754,14 +757,14 @@ You can change that without changing the guard, in three ways:
 **1. SQLite, for real SQL queries (no server needed):**
 
 ```sh
-AUDIT_BACKEND=sqlite AUDIT_PATH=audit.db python3 -m agent_guard.server
+AUDIT_BACKEND=sqlite AUDIT_PATH=audit.db python3 -m callscreen.server
 # then: sqlite3 audit.db "SELECT decision, COUNT(*) FROM audit GROUP BY decision;"
 ```
 
 **2. A different file, same format:**
 
 ```sh
-AUDIT_PATH=/var/log/agent-guard/audit.jsonl python3 -m agent_guard.server
+AUDIT_PATH=/var/log/callscreen/audit.jsonl python3 -m callscreen.server
 ```
 
 **3. Your own database or log store — plug in a sink:**
@@ -770,7 +773,7 @@ A sink is anything with an `append(record)` method. Pass it to the
 guard and every decision goes there, in the same record shape:
 
 ```python
-from agent_guard.guard import Guard
+from callscreen.guard import Guard
 
 class PostgresSink:
     def __init__(self, conn):
@@ -819,7 +822,7 @@ to. Unit tests check the cases you thought of; fuzzing checks the ones
 you did not. This project ships a seeded fuzzer, stdlib only:
 
 ```sh
-python3 -m agent_guard.fuzz --iterations 5000 --seed 42
+python3 -m callscreen.fuzz --iterations 5000 --seed 42
 ```
 
 It generates random and randomly-mutated tool calls — mutated paths,
@@ -847,7 +850,7 @@ longer run with a different seed. A clean run prints
 ## Project structure
 
 ```
-agent_guard/
+callscreen/
   guard.py     Decision engine: auth, rate limit, allowlist, validation, approval
   scanner.py   Output scanning: injection phrases, secrets, personal data
   tools.py     Sandboxed mock tools (no real shell, network, or database)
@@ -859,7 +862,7 @@ agent_guard/
   manage.py    CLI management tool for policies
   admin.html   Browser management UI, served at /admin
   server.py    Stdlib HTTP server: POST /tool, GET /health, /admin/*
-tests/         Unit tests + eval suite runner + fuzz + audit + manage tests (42 tests)
+tests/         Unit tests + eval suite runner + fuzz + audit + manage tests (57 tests)
 eval/          scenarios.json — benign and attack cases
 eval/scanner_eval.py  Scanner FP/FN measurement (core 20 benign, 12 injection; hard 12 benign, 17 injection)
 simulation.py  Live day-in-the-life simulation, incl. V2 scenes
@@ -890,10 +893,10 @@ five things, and all five are now built:
 default, so tests stay fast and safe. Opt into real tools with:
 
 ```sh
-REAL_TOOLS=1 python3 -m agent_guard.server
+REAL_TOOLS=1 python3 -m callscreen.server
 # or in code:
-from agent_guard.guard import Guard
-from agent_guard.real_tools import execute as real_execute
+from callscreen.guard import Guard
+from callscreen.real_tools import execute as real_execute
 g = Guard(executor=real_execute)
 ```
 
@@ -973,18 +976,18 @@ All policy values are still HTML-escaped, and Edit/Delete/
 Approve still look policies up by index, never by building code
 from a policy value — the pentest XSS fix is preserved under
 the new styling. The UI is a single file,
-`agent_guard/admin.html`, served by the stdlib server; there
+`callscreen/admin.html`, served by the stdlib server; there
 is no build step, no JavaScript framework, and no external
 assets to load.
 
 ## Examples — Ollama, OpenAI, Anthropic, and any framework
 
-Agent Guard is not a plugin inside any of these, and none of them
+CallScreen is not a plugin inside any of these, and none of them
 has a guard hook — the integration lives in your agent loop, in
 one step, and it is the same step everywhere:
 
 1. The model returns a tool call instead of text.
-2. Your loop sends that tool call to Agent Guard first, *not* to the tool.
+2. Your loop sends that tool call to CallScreen first, *not* to the tool.
 3. ALLOW → send Guard's already-scanned output back as a tool message.
    BLOCK → tell the model it was blocked and why. NEEDS_APPROVAL →
    tell the model it was not executed and needs a human.
@@ -1006,7 +1009,7 @@ runs offline with no key at all.
 ### Works with Ollama (local models)
 
 Yes — and this is a particularly good fit, because both are local-first:
-Ollama on `localhost:11434`, Agent Guard on `localhost:8080` (or
+Ollama on `localhost:11434`, CallScreen on `localhost:8080` (or
 in-process), no cloud model, no keys leaving your machine.
 
 See `examples/ollama_agent.py` for a working, stdlib-only loop
@@ -1041,13 +1044,13 @@ One limit to be clear about: by default the examples use mock tools,
 so they demonstrate the guard step with mock output. To use real tools,
 keep Guard as the pre-check and put your real executor behind an
 ALLOW decision — do not bypass it. Pass
-`executor=real_execute` (from `agent_guard.real_tools`) to Guard,
+`executor=real_execute` (from `callscreen.real_tools`) to Guard,
 or run the server with `REAL_TOOLS=1`.
 
 ## Frequently asked questions
 
 **Can I swap out the model?**
-Yes. Agent Guard never calls a model — there is no model code in it at
+Yes. CallScreen never calls a model — there is no model code in it at
 all. It only sees a tool call and a tool's output. Swap GPT for Claude
 for Gemini for a local model and the gate does not change, as long as
 the agent still emits tool calls. The scanner is also pluggable: it is
@@ -1142,7 +1145,7 @@ GitHub and Google index this README, the repo name, its
 description, and its topics, so this section exists to say the
 quiet part plainly, in the words people actually search with:
 
-Agent Guard is an **AI agent security** tool, an **LLM guardrail**
+CallScreen is an **AI agent security** tool, an **LLM guardrail**
 for **tool calling / function calling**, a **policy gateway for
 agentic AI**, and a defence against **indirect prompt injection**
 and **prompt injection in tool output**. It covers **agent
