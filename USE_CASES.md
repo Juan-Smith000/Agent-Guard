@@ -1,4 +1,4 @@
-# Use cases — who uses Agent Guard, and what happens
+# Use cases — who uses CallScreen, and what happens
 
 Each case names the agent, its policy, a happy path, and an abuse path.
 "Allow / Block / Needs approval" is the whole policy language in the
@@ -72,12 +72,12 @@ running or being blocked outright.
 - **Unit / eval tests** (`tests/test_guard.py`, `eval/scenarios.json`):
   15 scenarios covering every use case above, benign and abuse.
   Run: `python3 -m unittest discover -s tests -v`
-- **Fuzz tests** (`agent_guard/fuzz.py`, `tests/test_fuzz.py`):
+- **Fuzz tests** (`callscreen/fuzz.py`, `tests/test_fuzz.py`):
   500 seeded random/mutated tool calls per test run, checking six
   invariants that must never break (no crash, valid decision, no
   destructive SQL allowed, no traversal allowed, no unknown agent/
   tool allowed, no secret leaked). Run:
-  `python3 -m agent_guard.fuzz --iterations 5000 --seed 42`
+  `python3 -m callscreen.fuzz --iterations 5000 --seed 42`
 - **Management tests** (`tests/test_manage.py`): allowing, blocking,
   and toggling approval take effect immediately, and policies survive
   a JSON round-trip.
