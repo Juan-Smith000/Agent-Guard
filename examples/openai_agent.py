@@ -1,11 +1,11 @@
-"""Example: OpenAI model + Agent Guard. Stdlib only, no openai package.
+"""Example: OpenAI model + CallScreen. Stdlib only, no openai package.
 
 How it fits together — the same guard step as the Ollama example,
 only the wire format changes:
     OpenAI (model, api.openai.com)
         -> decides it wants a tool call (message.tool_calls)
         -> THIS LOOP intercepts it, it does NOT go straight to a tool
-        -> Agent Guard decides ALLOW / BLOCK / NEEDS_APPROVAL
+        -> CallScreen decides ALLOW / BLOCK / NEEDS_APPROVAL
         -> if ALLOW, Guard's output (already scanned/redacted) is sent
            back as a "tool" message with the matching tool_call_id
         -> if BLOCK / NEEDS_APPROVAL, the model is told why, and the
@@ -27,7 +27,7 @@ Notes / honest limits:
 - If OPENAI_API_KEY is unset, this script exits with instructions
   instead of making an unauthenticated request.
 - Guard runs in-process here, with mock tools by default. To use
-  real tools, pass executor=real_execute (from agent_guard.real_tools)
+  real tools, pass executor=real_execute (from callscreen.real_tools)
   to Guard, or run the server with REAL_TOOLS=1 and POST to /tool.
   Do NOT execute a tool a second time after an ALLOW — Guard's
   output is already the tool's (scanned) output.
@@ -44,7 +44,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agent_guard.guard import Guard
+from callscreen.guard import Guard
 
 OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 MAX_TURNS = 5
