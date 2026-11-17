@@ -1,5 +1,5 @@
 services:
-  agent-guard:
+  callscreen:
     build: .
     ports:
       - "8080:8080"
