@@ -13,7 +13,7 @@ Here are the patterns, in the order to try them.
 
 ## 1. Don't commit it at all (the right answer for secrets)
 
-This is already how Agent Guard is set up, and it is the only
+This is already how CallScreen is set up, and it is the only
 pattern that works for keys and credentials:
 
 - **`.gitignore` already covers:** `policies.json` (real agent
@@ -47,11 +47,11 @@ and useless because everyone knows them), mock data, and docs.
 
 If you have internal extensions, real policies, internal docs,
 or a deployment config you do not want public, put them in a
-**second, private repo** — e.g. `agent-guard-internal` — and
+**second, private repo** — e.g. `callscreen-internal` — and
 keep the public repo to the core only.
 
 - The private repo can depend on the public one (`pip install
-  agent-guard`, or import the public package) — it does not
+  callscreen`, or import the public package) — it does not
   need to fork it.
 - A private submodule inside a public repo is a trap for most
   people: the submodule *pointer* is public, and anyone without
@@ -88,7 +88,7 @@ will not index it.
 Use this only for small, low-churn config, and know the
 trade-offs: key distribution is now your problem, key rotation
 means re-encrypting, and if the key ever leaks, the history
-is decrypted too. For most Agent Guard uses, pattern 1 or 2
+is decrypted too. For most CallScreen uses, pattern 1 or 2
 is simpler and safer than encryption in the public repo.
 
 ## 5. GitHub Secrets (for CI only, not for code)
@@ -115,13 +115,13 @@ before the delete. If that happens:
 3. Check forks / clones you do not control — you cannot
    purge those, which is why step 1 comes first.
 
-## Recommended setup for Agent Guard
+## Recommended setup for CallScreen
 
-- **Public repo `agent-guard`:** code, docs, examples, demo
+- **Public repo `callscreen`:** code, docs, examples, demo
   keys only. This is the discoverable, resume-facing repo.
 - **Local only (no repo):** real `policies.json`, audit logs,
   `ADMIN_KEY`, API keys — via env vars and `.gitignore`.
-- **Private repo `agent-guard-internal` (only if you need it):**
+- **Private repo `callscreen-internal` (only if you need it):**
   real deployment configs, internal extensions, internal docs.
   It imports the public package; it does not contain a copy
   of the public code.
