@@ -5,7 +5,7 @@ __pycache__/
 .venv/
 venv/
 
-# Agent Guard runtime artifacts — never commit these
+# CallScreen runtime artifacts — never commit these
 audit.jsonl
 audit.db
 audit*.jsonl
